@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 
 interface SearchBarProps {
   initialValue: string;
@@ -14,14 +15,11 @@ export function SearchBar({ initialValue, onSearch }: SearchBarProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Keep in sync if the URL value changes externally (e.g. back button).
   useEffect(() => setValue(initialValue), [initialValue]);
 
-  // Fetch typeahead suggestions (debounced).
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const q = value.trim();
-    // Don't suggest for boolean expressions / very short input.
     if (q.length < 2 || /[()"]|(\bAND\b|\bOR\b|\bNOT\b)/i.test(q)) {
       setSuggestions([]);
       return;
@@ -29,10 +27,7 @@ export function SearchBar({ initialValue, onSearch }: SearchBarProps) {
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/candidates/suggest?q=${encodeURIComponent(q)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSuggestions(data.suggestions ?? []);
-        }
+        if (res.ok) setSuggestions((await res.json()).suggestions ?? []);
       } catch {
         /* best effort */
       }
@@ -44,9 +39,7 @@ export function SearchBar({ initialValue, onSearch }: SearchBarProps) {
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -65,8 +58,9 @@ export function SearchBar({ initialValue, onSearch }: SearchBarProps) {
           submit(value);
         }}
       >
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
-          className="input"
+          className="h-10 w-full rounded-md border border-input bg-surface pl-9 pr-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
           placeholder='Search — supports AND, OR, NOT, "phrases", ( )'
           value={value}
           onChange={(e) => {
@@ -77,17 +71,18 @@ export function SearchBar({ initialValue, onSearch }: SearchBarProps) {
         />
       </form>
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
+        <ul className="absolute z-20 mt-1.5 max-h-64 w-full overflow-auto rounded-lg border border-border bg-surface p-1 shadow-popover">
           {suggestions.map((s) => (
             <li key={s}>
               <button
                 type="button"
-                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-muted"
                 onClick={() => {
                   setValue(s);
                   submit(s);
                 }}
               >
+                <Search className="h-3.5 w-3.5 text-muted-foreground" />
                 {s}
               </button>
             </li>

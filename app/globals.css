@@ -2,38 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+/*
+  Design tokens (light theme only — dark mode intentionally out of scope).
+  All colors are HSL channels so Tailwind can apply opacity via `hsl(var(--x) / a)`.
+*/
+@layer base {
+  :root {
+    --background: 210 40% 98%;      /* app canvas */
+    --surface: 0 0% 100%;           /* cards, sidebar, inputs */
+    --foreground: 222 47% 11%;      /* primary text */
+    --muted: 210 40% 96%;           /* subtle fills, zebra */
+    --muted-foreground: 215 16% 47%;/* secondary text */
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 243 75% 59%;
+
+    --primary: 243 75% 59%;         /* indigo-600 */
+    --primary-hover: 245 58% 51%;   /* indigo-700 */
+    --primary-foreground: 0 0% 100%;
+    --primary-subtle: 244 76% 96%;  /* indigo-50 */
+
+    /* Semantic */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-subtle: 141 79% 95%;
+    --success-text: 142 72% 29%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-subtle: 48 96% 92%;
+    --warning-text: 25 95% 34%;
+
+    --danger: 0 72% 51%;
+    --danger-foreground: 0 0% 100%;
+    --danger-subtle: 0 86% 96%;
+    --danger-text: 0 70% 42%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --info-subtle: 214 95% 93%;
+    --info-text: 224 64% 40%;
+
+    --radius: 0.625rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Consistent focus ring across interactive elements. */
+  :focus-visible {
+    outline: none;
+  }
 }
 
-body {
-  @apply bg-gray-50 text-gray-900 antialiased;
-}
-
-/* Small shared component classes to keep markup clean. */
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+@layer utilities {
+  /* Thin, subtle scrollbars for panels. */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
-  .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
-  }
-  .btn-secondary {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
-  }
-  .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700;
-  }
-  .input {
-    @apply w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
-  }
-  .label {
-    @apply mb-1 block text-sm font-medium text-gray-700;
-  }
-  .card {
-    @apply rounded-lg border border-gray-200 bg-white shadow-sm;
-  }
-  .badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
   }
 }

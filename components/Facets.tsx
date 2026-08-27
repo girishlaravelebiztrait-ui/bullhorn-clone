@@ -1,7 +1,9 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import type { SearchResult } from "@/lib/candidate-search";
 import { CANDIDATE_STATUSES, CANDIDATE_SOURCES } from "@/lib/validators";
+import { Input } from "@/components/ui/input";
 
 export interface FacetSelection {
   skills: string[];
@@ -29,17 +31,16 @@ function toggle(list: string[], value: string): string[] {
 export function Facets({ facets, selection, onChange, degraded }: FacetsProps) {
   const update = (patch: Partial<FacetSelection>) => onChange({ ...selection, ...patch });
 
-  // Merge known enum values with observed buckets so options never disappear
-  // when a filter narrows results to zero of a value.
   const statusOptions = mergeBuckets(CANDIDATE_STATUSES as readonly string[], facets.status);
   const sourceOptions = mergeBuckets(CANDIDATE_SOURCES as readonly string[], facets.source);
 
   return (
     <div className="space-y-6 text-sm">
       {degraded && (
-        <p className="rounded-md bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-          Search index offline — facet counts unavailable (showing DB results).
-        </p>
+        <div className="flex items-start gap-2 rounded-md bg-warning-subtle px-3 py-2 text-xs text-warning-text">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>Search index offline — facet counts unavailable (showing DB results).</span>
+        </div>
       )}
 
       <CheckboxFacet
@@ -59,42 +60,40 @@ export function Facets({ facets, selection, onChange, degraded }: FacetsProps) {
         options={facets.skills}
         selected={selection.skills}
         onToggle={(v) => update({ skills: toggle(selection.skills, v) })}
-        limit={15}
+        limit={12}
       />
       <CheckboxFacet
         title="Tags"
         options={facets.tags}
         selected={selection.tags}
         onToggle={(v) => update({ tags: toggle(selection.tags, v) })}
-        limit={15}
+        limit={12}
       />
       <CheckboxFacet
         title="City"
         options={facets.city}
         selected={selection.city}
         onToggle={(v) => update({ city: toggle(selection.city, v) })}
-        limit={12}
+        limit={10}
       />
 
       <div>
-        <h3 className="mb-2 font-medium text-gray-900">Experience (years)</h3>
+        <h3 className="mb-2 font-medium text-foreground">Experience (years)</h3>
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="number"
             min={0}
             placeholder="Min"
-            className="input"
             value={selection.minExperience ?? ""}
             onChange={(e) =>
               update({ minExperience: e.target.value === "" ? undefined : Number(e.target.value) })
             }
           />
-          <span className="text-gray-400">–</span>
-          <input
+          <span className="text-muted-foreground">–</span>
+          <Input
             type="number"
             min={0}
             placeholder="Max"
-            className="input"
             value={selection.maxExperience ?? ""}
             onChange={(e) =>
               update({ maxExperience: e.target.value === "" ? undefined : Number(e.target.value) })
@@ -104,17 +103,15 @@ export function Facets({ facets, selection, onChange, degraded }: FacetsProps) {
       </div>
 
       <div>
-        <h3 className="mb-2 font-medium text-gray-900">Date added</h3>
+        <h3 className="mb-2 font-medium text-foreground">Date added</h3>
         <div className="space-y-2">
-          <input
+          <Input
             type="date"
-            className="input"
             value={selection.createdFrom ?? ""}
             onChange={(e) => update({ createdFrom: e.target.value || undefined })}
           />
-          <input
+          <Input
             type="date"
-            className="input"
             value={selection.createdTo ?? ""}
             onChange={(e) => update({ createdTo: e.target.value || undefined })}
           />
@@ -148,40 +145,28 @@ function CheckboxFacet({
   limit?: number;
 }) {
   const shown = limit ? options.slice(0, limit) : options;
-  // Always show selected values even if beyond the limit.
   const extraSelected = selected.filter((s) => !shown.some((o) => o.key === s));
 
   return (
     <div>
-      <h3 className="mb-2 font-medium text-gray-900">{title}</h3>
+      <h3 className="mb-2 font-medium text-foreground">{title}</h3>
       {options.length === 0 && extraSelected.length === 0 ? (
-        <p className="text-xs text-gray-400">No values</p>
+        <p className="text-xs text-muted-foreground">No values</p>
       ) : (
-        <ul className="space-y-1">
-          {shown.map((o) => (
+        <ul className="space-y-0.5">
+          {[...shown, ...extraSelected.map((s) => ({ key: s, count: -1 }))].map((o) => (
             <li key={o.key}>
-              <label className="flex cursor-pointer items-center gap-2">
+              <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted">
                 <input
                   type="checkbox"
                   checked={selected.includes(o.key)}
                   onChange={() => onToggle(o.key)}
-                  className="rounded border-gray-300"
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                 />
-                <span className="flex-1 truncate">{o.key}</span>
-                <span className="text-xs text-gray-400">{o.count}</span>
-              </label>
-            </li>
-          ))}
-          {extraSelected.map((s) => (
-            <li key={s}>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked
-                  onChange={() => onToggle(s)}
-                  className="rounded border-gray-300"
-                />
-                <span className="flex-1 truncate">{s}</span>
+                <span className="flex-1 truncate text-foreground">{o.key}</span>
+                {o.count >= 0 && (
+                  <span className="text-xs tabular-nums text-muted-foreground">{o.count}</span>
+                )}
               </label>
             </li>
           ))}

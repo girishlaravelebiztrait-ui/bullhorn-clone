@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { Users, UserPlus, Upload, Database, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { esIsUp } from "@/lib/elasticsearch";
+import { Card } from "@/components/ui/card";
+import { Badge, statusVariant } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -12,62 +16,100 @@ export default async function AdminDashboard() {
     esIsUp(),
   ]);
 
-  return (
-    <div className="p-8">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Dashboard</h1>
+  const statusOrder = ["Active", "Placed", "Do Not Contact", "Blacklisted"];
+  const statusMap = new Map(byStatus.map((s) => [s.status, s._count._all]));
 
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="card p-4">
-          <p className="text-sm text-gray-500">Total candidates</p>
-          <p className="mt-1 text-2xl font-bold">{total}</p>
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Overview of your candidate database.</p>
         </div>
-        {byStatus.map((s) => (
-          <div key={s.status} className="card p-4">
-            <p className="text-sm text-gray-500">{s.status}</p>
-            <p className="mt-1 text-2xl font-bold">{s._count._all}</p>
+        <Badge variant={esUp ? "success" : "warning"}>
+          <Database className="h-3.5 w-3.5" />
+          Search index: {esUp ? "online" : "offline (degraded)"}
+        </Badge>
+      </div>
+
+      {/* Stat cards */}
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Card className="p-5">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" /> Total
           </div>
+          <p className="mt-2 text-3xl font-semibold text-foreground">{total.toLocaleString()}</p>
+        </Card>
+        {statusOrder.map((status) => (
+          <Card key={status} className="p-5">
+            <div className="flex items-center gap-2">
+              <Badge variant={statusVariant(status)}>{status}</Badge>
+            </div>
+            <p className="mt-2 text-3xl font-semibold text-foreground">
+              {(statusMap.get(status) ?? 0).toLocaleString()}
+            </p>
+          </Card>
         ))}
       </div>
 
-      <div className="mb-6 flex gap-3">
-        <Link href="/admin/candidates" className="btn-primary">
-          View candidates
-        </Link>
-        <Link href="/admin/candidates/new" className="btn-secondary">
-          Add candidate
-        </Link>
-        <Link href="/admin/import" className="btn-secondary">
-          Import
-        </Link>
+      {/* Quick actions */}
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <QuickAction href="/admin/candidates" icon={<Users />} title="Browse candidates" desc="Search, filter, and manage" />
+        <QuickAction href="/admin/candidates/new" icon={<UserPlus />} title="Add a candidate" desc="Manual entry + resume" />
+        <QuickAction href="/admin/import" icon={<Upload />} title="Import" desc="Spreadsheet or resumes" />
       </div>
 
-      <div className="card p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">Recent imports</h2>
-          <span
-            className={`badge ${
-              esUp ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
-            Search index: {esUp ? "online" : "offline (degraded)"}
-          </span>
+      {/* Recent imports */}
+      <Card>
+        <div className="border-b border-border px-6 py-4">
+          <h2 className="font-semibold text-foreground">Recent imports</h2>
         </div>
-        {recentBatches.length === 0 ? (
-          <p className="text-sm text-gray-500">No imports yet.</p>
-        ) : (
-          <ul className="divide-y divide-gray-100 text-sm">
-            {recentBatches.map((b) => (
-              <li key={b.id} className="flex justify-between py-2">
-                <span className="truncate">{b.fileName}</span>
-                <span className="text-gray-500">
-                  {b.successCount} ok / {b.failedCount} failed ·{" "}
-                  {b.createdAt.toLocaleDateString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+        <div className="px-6 py-4">
+          {recentBatches.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No imports yet.</p>
+          ) : (
+            <ul className="divide-y divide-border text-sm">
+              {recentBatches.map((b) => (
+                <li key={b.id} className="flex items-center justify-between gap-4 py-3">
+                  <span className="truncate font-medium text-foreground">{b.fileName}</span>
+                  <span className="flex shrink-0 items-center gap-3 text-muted-foreground">
+                    <Badge variant="success">{b.successCount} ok</Badge>
+                    {b.failedCount > 0 && <Badge variant="danger">{b.failedCount} failed</Badge>}
+                    <span className="hidden sm:inline">{b.createdAt.toLocaleDateString()}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Card>
     </div>
+  );
+}
+
+function QuickAction({
+  href,
+  icon,
+  title,
+  desc,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <Link href={href}>
+      <Card className="group flex items-center gap-4 p-5 transition-colors hover:border-primary/40 hover:bg-muted/40">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary [&_svg]:h-5 [&_svg]:w-5">
+          {icon}
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-medium text-foreground">{title}</span>
+          <span className="block text-xs text-muted-foreground">{desc}</span>
+        </span>
+        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Card>
+    </Link>
   );
 }

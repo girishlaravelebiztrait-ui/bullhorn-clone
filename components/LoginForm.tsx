@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   const router = useRouter();
@@ -18,11 +22,7 @@ export function LoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const res = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
     if (res?.error) {
       setError("Invalid email or password.");
@@ -33,48 +33,63 @@ export function LoginForm() {
   }
 
   return (
-    <div className="card w-full max-w-sm p-8">
-      <h1 className="mb-1 text-2xl font-bold text-gray-900">ATS Admin</h1>
-      <p className="mb-6 text-sm text-gray-500">Sign in to manage candidates.</p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="label" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="username"
-            className="input"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+    <div className="w-full max-w-sm">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
+          <Users className="h-6 w-6" />
         </div>
-        <div>
-          <label className="label" htmlFor="password">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Welcome back
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sign in to the ATS admin console.
+        </p>
+      </div>
 
-        {error && (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-        )}
+      <div className="rounded-xl border border-border bg-surface p-6 shadow-lg sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="username"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              invalid={!!error}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              invalid={!!error}
+              required
+            />
+          </div>
 
-        <button type="submit" className="btn-primary w-full" disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+          {error && (
+            <div className="rounded-md bg-danger-subtle px-3 py-2 text-sm text-danger-text">
+              {error}
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" loading={loading}>
+            {loading ? "Signing in…" : "Sign in"}
+          </Button>
+        </form>
+      </div>
+
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        ATS Candidate Storage · Admin access only
+      </p>
     </div>
   );
 }

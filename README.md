@@ -188,6 +188,7 @@ Then re-run steps 4–7.
 | `npx prisma migrate deploy` | Apply committed DB migrations (then `npx prisma generate`) |
 | `npm run es:init` | Create the Elasticsearch index (idempotent) |
 | `npm run seed` | Create/update the admin from `.env` |
+| `npm run seed:candidates` | Generate 500+ realistic dummy candidates (faker) + index them (safe to re-run) |
 | `npm run dev` | Start the app at http://localhost:3000 |
 | `npm run build` / `npm start` | Production build / serve |
 | `npm run reindex` | **Drop and rebuild** the search index from MySQL (recovery) |
