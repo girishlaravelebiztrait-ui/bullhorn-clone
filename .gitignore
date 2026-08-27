@@ -1,0 +1,38 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# env
+.env
+.env.local
+.env*.local
+
+# uploaded files (resumes)
+/uploads
+
+# prisma generated client (if output redirected)
+/prisma/generated
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+.DS_Store
+*.pem
+.vscode/
+.idea/
+
+# typescript
+*.tsbuildinfo

@@ -1,0 +1,90 @@
+// Prisma schema for the ATS Candidate Storage app (Phase 1).
+// MySQL is the source of truth. Elasticsearch is a downstream search index
+// kept in sync via write-through (see lib/candidate-service.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  importBatches ImportBatch[]
+  activityLogs  CandidateActivityLog[]
+}
+
+model Candidate {
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String   @unique
+  phone           String?
+  currentEmployer String?
+  currentTitle    String?
+  // Location kept simple as split fields.
+  city            String?
+  state           String?
+  country         String?
+  // Stored as JSON arrays in MySQL; indexed as keyword[] in Elasticsearch.
+  skills          Json?
+  tags            Json?
+  experienceYears Int?
+  // "Import" | "Manual"
+  source          String   @default("Manual")
+  // Active | Placed | Do Not Contact | Blacklisted
+  status          String   @default("Active")
+  notes           String?  @db.Text
+  resumeUrl       String?
+  resumeText      String?  @db.LongText
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  activityLogs CandidateActivityLog[]
+
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model ImportBatch {
+  id           String   @id @default(cuid())
+  fileName     String
+  totalRows    Int      @default(0)
+  successCount Int      @default(0)
+  failedCount  Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  adminId String
+  admin   Admin  @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+}
+
+model CandidateActivityLog {
+  id String @id @default(cuid())
+  // "created" | "updated" | "deleted" | "imported"
+  action String
+  // Simple before/after diff kept as JSON.
+  changes Json?
+  createdAt DateTime @default(now())
+
+  candidateId String?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+
+  adminId String
+  admin   Admin  @relation(fields: [adminId], references: [id])
+
+  @@index([candidateId])
+  @@index([adminId])
+  @@index([createdAt])
+}
